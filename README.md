@@ -147,10 +147,10 @@ Proses automasi untuk konfigurasi group replication MySQL akan disimpan dalam `m
     report_host = "192.168.16.185"
     loose-group_replication_local_address = "192.168.16.185:33061"
    ```
-Hasil terjemahan untuk file perintah automasi didalam vagrant
-[my185.cnf](https://github.com/aufawibowo/multi-master-replication/blob/master/my185.cnf)
-[my186.cnf](https://github.com/aufawibowo/multi-master-replication/blob/master/my186.cnf)
-[my187.cnf](https://github.com/aufawibowo/multi-master-replication/blob/master/my187.cnf)
+    Hasil terjemahan untuk file perintah automasi didalam vagrant
+    [my185.cnf](https://github.com/aufawibowo/multi-master-replication/blob/master/my185.cnf);
+    [my186.cnf](https://github.com/aufawibowo/multi-master-replication/blob/master/my186.cnf);
+    [my187.cnf](https://github.com/aufawibowo/multi-master-replication/blob/master/my187.cnf);
 
 5. Copy file-file `.cnf` tadi kedalam vagrant box yang akan digunakan
    Tambahkan perintah
@@ -169,9 +169,9 @@ sudo service mysql restart
 disetiap akhir file deployMYSQL{angka}.sh
 
 Hasil akhir file `deployMYSQL{angka}.sh` adalah seperti berikut
-[deployMYSQL185.sh](https://github.com/aufawibowo/multi-master-replication/blob/master/deployMYSQL185.sh)
-[deployMYSQL186.sh](https://github.com/aufawibowo/multi-master-replication/blob/master/deployMYSQL186.sh)
-[deployMYSQL187.sh](https://github.com/aufawibowo/multi-master-replication/blob/master/deployMYSQL187.sh)
+[deployMYSQL185.sh](https://github.com/aufawibowo/multi-master-replication/blob/master/deployMYSQL185.sh);
+[deployMYSQL186.sh](https://github.com/aufawibowo/multi-master-replication/blob/master/deployMYSQL186.sh);
+[deployMYSQL187.sh](https://github.com/aufawibowo/multi-master-replication/blob/master/deployMYSQL187.sh);
 
 ### 3. Implementasi Aplikasi Tambahan Kedalam Sistem
 ### 4. Simulasi Fail-Over
