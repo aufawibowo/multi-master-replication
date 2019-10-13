@@ -1,3 +1,5 @@
+Muhammad Aufa Wibowo
+05111640000184
 # Multi Master Replication
 ## Outline
 - [Multi Master Replication](#multi-master-replication)
@@ -9,8 +11,10 @@
       - [1.4 Spesifikasi Hardware](#14-spesifikasi-hardware)
     - [2. Implementasi](#2-implementasi)
       - [1. Menginstall OS dan MySQL](#1-menginstall-os-dan-mysql)
-      - [2. Mengeluarkan `uuidgen`](#2-mengeluarkan-uuidgen)
-      - [3. Membuat Group Replication didalam file konfigurasi MySQL](#3-membuat-group-replication-didalam-file-konfigurasi-mysql)
+      - [2. Konfigurasi OS dan MySQL dasar](#2-konfigurasi-os-dan-mysql-dasar)
+      - [3. Mengeluarkan `uuidgen`](#3-mengeluarkan-uuidgen)
+      - [4. Membuat Group Replication didalam file konfigurasi MySQL](#4-membuat-group-replication-didalam-file-konfigurasi-mysql)
+      - [5. Restart Seluruh Server Database MySQL](#5-restart-seluruh-server-database-mysql)
     - [3. Implementasi Aplikasi Tambahan Kedalam Sistem](#3-implementasi-aplikasi-tambahan-kedalam-sistem)
     - [4. Simulasi Fail-Over](#4-simulasi-fail-over)
 
@@ -74,20 +78,33 @@ sudo dpkg -i mysql-community-client_5.7.23-1ubuntu16.04_amd64.deb
 sudo dpkg -i mysql-client_5.7.23-1ubuntu16.04_amd64.deb
 sudo dpkg -i mysql-community-server_5.7.23-1ubuntu16.04_amd64.deb
 ```
-
-#### 2. Mengeluarkan `uuidgen` 
+#### 2. Konfigurasi OS dan MySQL dasar
+1. Konfigurasi OS
+2. Konfigurasi MySQL
+    Set password untuk MySQL
+    ```
+    sudo debconf-set-selections <<< 'mysql-community-server mysql-community-server/root-pass password admin'
+    sudo debconf-set-selections <<< 'mysql-community-server mysql-community-server/re-root-pass password admin'
+    ```
+    Dalam file konfigurasi MySQL, kami mengonfigurasi layanan untuk mendengarkan koneksi eksternal pada port default 3306. Kami juga mendefinisikan 33061 sebagai port yang harus digunakan anggota untuk koordinasi replikasi.
+    Kita perlu membuka akses ke dua port ini di firewall kita.
+    ```
+    sudo ufw allow 33061
+    sudo ufw allow 3306
+    ```
+#### 3. Mengeluarkan `uuidgen` 
 ketik `uuidgen` pada terminal UNIX (dalam hal ini, menggunakan ubuntu).
 ```
 > uuidgen
 ```
 output
 ```
-keluaran uuidgen
+keluaran_uuid
 ```
-#### 3. Membuat Group Replication didalam file konfigurasi MySQL
-
+#### 4. Membuat Group Replication didalam file konfigurasi MySQL
+Proses automasi untuk konfigurasi group replication MySQL akan disimpan dalam `my{angka}.cnf`. Berikut adalah tahapan menulis perintah-perintah yang ada didalam file tersebut.
 1. Konfigurasi umum group replication
-    Bagian berikut mengandung konfigurasi umum untuk group replication.
+    Bagian berikut mengandung konfigurasi umum untuk group replication. Pengaturan ini mengaktifkan ID transaksi global, mengkonfigurasi pencatatan biner yang diperlukan untuk replikasi grup, dan mengkonfigurasi SSL untuk grup. Konfigurasi ini juga mengatur beberapa item lain yang membantu dalam pemulihan dan bootstrap.
     ```
     # General replication settings
     gtid_mode = ON
@@ -105,7 +122,56 @@ keluaran uuidgen
     loose-group_replication_recovery_use_ssl = 1
     ```
 2. Konfigurasi shared group replication
+    `loose-group_replication_group_name` adalah UUID yang sudah dihasilkan tadi. `loose-group_replication_ip_whitelist` adalah daftar alamat IP server MySQL. `loose-group_replication_group_seeds` berisi hal yang sama dengan sebelumnya namun diisi oleh port yang akan digunakan oleh setiap alamat IP. 
+    ```
+    # Shared replication group configuration
+    loose-group_replication_group_name = "keluaran_uuid"
+    loose-group_replication_ip_whitelist = "192.168.16.185, 192.168.16.186, 192.168.16.187"
+    loose-group_replication_group_seeds = "192.168.16.185:33061, 192.168.16.186:33061, 192.168.16.187:33061"
+    ```
 3. Konfigurasi untuk Multi-Primary 
+    Menambahkan `loose-group_replication_single_primary_mode` dan `loose-group_replication_enforce_update_everywhere_checks` dengan parameter berikut.
+    ```
+    # Single or Multi-primary mode? Uncomment these two lines
+    # for multi-primary mode, where any host can accept writes
+    loose-group_replication_single_primary_mode = OFF
+    loose-group_replication_enforce_update_everywhere_checks = ON
+    ```
+4. Konfigurasi untuk setiap host
+   
+
+   ```
+    # Host specific replication configuration
+    server_id = 11
+    bind-address = "192.168.16.185"
+    report_host = "192.168.16.185"
+    loose-group_replication_local_address = "192.168.16.185:33061"
+   ```
+Hasil terjemahan untuk file perintah automasi didalam vagrant
+[my185.cnf](https://github.com/aufawibowo/multi-master-replication/blob/master/my185.cnf)
+[my186.cnf](https://github.com/aufawibowo/multi-master-replication/blob/master/my186.cnf)
+[my187.cnf](https://github.com/aufawibowo/multi-master-replication/blob/master/my187.cnf)
+
+5. Copy file-file `.cnf` tadi kedalam vagrant box yang akan digunakan
+   Tambahkan perintah
+   ```
+    # Copy MySQL configurations
+    sudo cp /vagrant/my{angka}.cnf /etc/mysql/my.cnf
+   ```
+   disetiap akhir file deployMYSQL{angka}.sh
+    
+#### 5. Restart Seluruh Server Database MySQL
+Tambahkan perintah
+```
+# Restart MySQL services
+sudo service mysql restart
+```
+disetiap akhir file deployMYSQL{angka}.sh
+
+Hasil akhir file `deployMYSQL{angka}.sh` adalah seperti berikut
+[deployMYSQL185.sh](https://github.com/aufawibowo/multi-master-replication/blob/master/deployMYSQL185.sh)
+[deployMYSQL186.sh](https://github.com/aufawibowo/multi-master-replication/blob/master/deployMYSQL186.sh)
+[deployMYSQL187.sh](https://github.com/aufawibowo/multi-master-replication/blob/master/deployMYSQL187.sh)
 
 ### 3. Implementasi Aplikasi Tambahan Kedalam Sistem
 ### 4. Simulasi Fail-Over
