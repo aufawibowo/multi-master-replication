@@ -35,6 +35,4 @@ sudo cp /vagrant/my187.cnf /etc/mysql/my.cnf
 sudo service mysql restart
 
 # Cluster bootstrapping
-# sudo mysql -u root -padmin < /vagrant/cluster_bootstrap.sql
-# sudo mysql -u root -padmin < /vagrant/addition_to_sys.sql
-# sudo mysql -u root -padmin < /vagrant/create_proxysql_user.sql
+sudo mysql -u root -padmin < /vagrant/cluster_member.sql
