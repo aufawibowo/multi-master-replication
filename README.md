@@ -43,7 +43,7 @@ Muhammad Aufa Wibowo
        - RAM 512MB
    3. Apache Web server
        - OS menguunakan `ubuntu/xenial64`
-       - RAM 512MB
+       - RAM 1024MB
 ### 2. Implementasi 
 Seluruh tahapan yang ada didalam segmen implementasi ini hanya berlaku didalam environment vagrant.
 #### 1. Menginstall OS dan MySQL
@@ -197,10 +197,37 @@ mysql> INSTALL PLUGIN group_replication SONAME 'group_replication.so';
 ```
 Hasil akhir [cluster_member.sql](https://github.com/aufawibowo/multi-master-replication/blob/master/cluster_member.sql);
 #### 7. Memulai Group Replication
-```sql
-vagrant@db1 mysql> SET GLOBAL group_replication_bootstrap_group=ON;
-vagrant@db1 mysql> START GROUP_REPLICATION;
-vagrant@db1 mysql> SET GLOBAL group_replication_bootstrap_group=OFF;
-```
+Sekarang setiap server MySQL memiliki pengguna replikasi yang dikonfigurasi dan plugin replikasi grup diaktifkan, kita dapat memulai untuk dimunculkan digrup kita.
+1. Bootstrap node pertama
+    Anggota grup bergantung pada anggota yang ada untuk mengirim data replikasi, daftar anggota terbaru, dan informasi lainnya ketika awal bergabung dengan grup. Oleh karena itu, kita perlu menggunakan prosedur yang sedikit berbeda untuk memulai anggota grup awal sehingga mengetahui tidak mengharapkan informasi ini dari anggota lain dalam daftar benihnya.
+    Jika disetel, variabel `group_replication_bootstrap_group` memberi tahu anggota bahwa ia seharusnya tidak mengharapkan untuk menerima informasi dari teman sebaya dan sebaliknya harus membuat grup baru dan memilih sendiri anggota utama. Karena satu-satunya situasi di mana ini sesuai adalah ketika tidak ada anggota grup yang ada, kami akan mematikan fungsi ini segera setelah bootstrap grup:
+    ```sql
+    vagrant@db185 mysql> SET GLOBAL group_replication_bootstrap_group=ON;
+    vagrant@db185 mysql> START GROUP_REPLICATION;
+    vagrant@db185 mysql> SET GLOBAL group_replication_bootstrap_group=OFF;
+    ```
+    Grup harus dimulai dengan server ini sebagai satu-satunya anggota. Kita dapat memverifikasi ini dengan memeriksa entri dalam tabel `replication_group_members` di database `performance_schema`:
+    ```sql
+    vagrant@db185 mysql> SELECT * FROM performance_schema.replication_group_members;
+    ```
+    2. Memulai node yang tersisa
+    Selanjutnya, pada server `db2` dan `db3` dalam kasus ini (bisa lebih dari satu), mulai replikasi grup. Karena kita sudah memiliki anggota aktif, kita tidak perlu mem-bootstrap grup dan cukup bergabung dengan cara:
+    ```sql
+    vagrant@db186 mysql> START GROUP_REPLICATION;
+    ```
+    ```sql
+    vagrant@db187 mysql> START GROUP_REPLICATION;
+    ```
+    3. Cek apakah anggota sudah tergabung pada grup
+    ```sql
+    vagrant@db186 mysql> SELECT * FROM performance_schema.replication_group_members;
+    ```
+    ```sql
+    vagrant@db187 mysql> SELECT * FROM performance_schema.replication_group_members;
+    ```
+
+
+
+
 ### 3. Implementasi Aplikasi Tambahan Kedalam Sistem
 ### 4. Simulasi Fail-Over
