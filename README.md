@@ -301,4 +301,48 @@ Load balancer ini menggunakan ProxySQL
     ProxySQLAdmin> SAVE MYSQL USERS TO DISK;
    ```
 ### 3. Implementasi Aplikasi Tambahan Kedalam Sistem
+Berikut adalah tambahan aplikasi server API yang terhubung dengan mysql
+1. Instal apache dan php
+    ```shell
+    #apache
+    sudo apt-get update
+    sudo apt-get install apache2
+
+    sudo nano /etc/apache2/apache2.conf
+    server_domain_or_IP
+
+    sudo systemctl restart apache2
+    sudo ufw app info "Apache Full"
+    #php
+    sudo apt-get install php libapache2-mod-php php-mcrypt php-mysql
+    sudo systemctl restart apache2
+
+    #git
+    sudo apt-get install git
+
+    #update
+    sudo apt-get update
+    sudo apt-get upgrade
+    ```
+2. Clone repo
+    ```shell
+    git clone https://github.com/aufawibowo/php-rest-api
+    cd php-rest-api
+    cp server /var/www/html
+    ```
 ### 4. Simulasi Fail-Over
+1. Mematikan server pada database
+   ```shell
+   vagrant ssh db186
+   sudo systemctl stop mysql
+   sudo systemctl status mysql
+   ```
+
+2. Mengecek status server
+    ```shell
+    vagrant ssh proxy
+    mysql -u admin -p -h 127.0.0.1 -P 6032 --prompt='ProxySQLAdmin> '
+    ```
+    ```sql
+    SELECT hostgroup_id, hostname, status FROM runtime_mysql_servers;
+    ```
