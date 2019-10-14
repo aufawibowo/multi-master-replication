@@ -1,3 +1,4 @@
+-- basic
 SET SQL_LOG_BIN=0;
 CREATE USER 'repl'@'%' IDENTIFIED BY 'password' REQUIRE SSL;
 GRANT REPLICATION SLAVE ON *.* TO 'repl'@'%';
