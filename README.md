@@ -17,6 +17,7 @@ Muhammad Aufa Wibowo
       - [5. Restart Seluruh Server Database MySQL](#5-restart-seluruh-server-database-mysql)
       - [6. Membuat Pengguna Replikasi dan Mengaktifkan Plugin Group Replication](#6-membuat-pengguna-replikasi-dan-mengaktifkan-plugin-group-replication)
       - [7. Memulai Group Replication](#7-memulai-group-replication)
+      - [8. Menginstall dan Mengkonfigurasi Load Balancer](#8-menginstall-dan-mengkonfigurasi-load-balancer)
     - [3. Implementasi Aplikasi Tambahan Kedalam Sistem](#3-implementasi-aplikasi-tambahan-kedalam-sistem)
     - [4. Simulasi Fail-Over](#4-simulasi-fail-over)
 
@@ -210,7 +211,7 @@ Sekarang setiap server MySQL memiliki pengguna replikasi yang dikonfigurasi dan 
     ```sql
     vagrant@db185 mysql> SELECT * FROM performance_schema.replication_group_members;
     ```
-    2. Memulai node yang tersisa
+2. Memulai node yang tersisa
     Selanjutnya, pada server `db2` dan `db3` dalam kasus ini (bisa lebih dari satu), mulai replikasi grup. Karena kita sudah memiliki anggota aktif, kita tidak perlu mem-bootstrap grup dan cukup bergabung dengan cara:
     ```sql
     vagrant@db186 mysql> START GROUP_REPLICATION;
@@ -218,14 +219,46 @@ Sekarang setiap server MySQL memiliki pengguna replikasi yang dikonfigurasi dan 
     ```sql
     vagrant@db187 mysql> START GROUP_REPLICATION;
     ```
-    3. Cek apakah anggota sudah tergabung pada grup
+3. Cek apakah anggota sudah tergabung pada grup
     ```sql
     vagrant@db186 mysql> SELECT * FROM performance_schema.replication_group_members;
     ```
     ```sql
     vagrant@db187 mysql> SELECT * FROM performance_schema.replication_group_members;
     ```
+#### 8. Menginstall dan Mengkonfigurasi Load Balancer
+Load balancer ini menggunakan ProxySQL
+1. Download ProxySQL dan install dengan perintah
+   ```shell
+    #download
+    curl -OL https://github.com/sysown/proxysql/releases/download/v1.4.4/proxysql_1.4.4-ubuntu16_amd64.deb
+    curl -OL https://dev.mysql.com/get/Downloads/MySQL-5.7/mysql-common_5.7.23-1ubuntu16.04_amd64.deb
+    curl -OL https://dev.mysql.com/get/Downloads/MySQL-5.7/mysql-community-client_5.7.23-1ubuntu16.04_amd64.deb
+    curl -OL https://dev.mysql.com/get/Downloads/MySQL-5.7/mysql-client_5.7.23-1ubuntu16.04_amd64.deb
 
+    #install
+    sudo dpkg -i proxysql_1.4.4-ubuntu16_amd64.deb
+    sudo dpkg -i mysql-common_5.7.23-1ubuntu16.04_amd64.deb
+    sudo dpkg -i mysql-community-client_5.7.23-1ubuntu16.04_amd64.deb
+    sudo dpkg -i mysql-client_5.7.23-1ubuntu16.04_amd64.deb
+   ```
+2. Mengatur firewall
+   ```shell
+    sudo ufw allow 33061
+    sudo ufw allow 3306
+   ```
+3. Memulai ProxySQL
+   ```shell
+   sudo systemctl start proxysql
+   ```
+4. Mengkonfigurasi MySQL member agar ProxySQL untuk group replication berjalan
+    ```shell
+    vagrant@db186:~$ mysql -u root -p < addition_to_sys.sql
+    vagrant@db186:~$ mysql -u root -p
+    vagrant@db186 mysql> CREATE USER 'monitor'@'%' IDENTIFIED BY 'monitorpassword';
+    vagrant@db186 mysql> GRANT SELECT on sys.* to 'monitor'@'%';
+    vagrant@db186 mysql> FLUSH PRIVILEGES;
+    ```
 
 
 
