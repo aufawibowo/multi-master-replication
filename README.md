@@ -259,8 +259,46 @@ Load balancer ini menggunakan ProxySQL
     vagrant@db186 mysql> GRANT SELECT on sys.* to 'monitor'@'%';
     vagrant@db186 mysql> FLUSH PRIVILEGES;
     ```
-
-
-
+5. Menambahkan akun monitoring
+   ```shell
+   mysql -u admin -p -h 127.0.0.1 -P 6032 --prompt='ProxySQLAdmin>
+   ```
+   ```shell
+    ProxySQLAdmin> UPDATE global_variables SET variable_value='monitor' WHERE variable_name='mysql-monitor_username';
+    ProxySQLAdmin> UPDATE global_variables SET variable_value='monitorpassword' WHERE variable_name='mysql-monitor_password';
+    ProxySQLAdmin> LOAD MYSQL VARIABLES TO RUNTIME;
+    ProxySQLAdmin> SAVE MYSQL VARIABLES TO DISK;
+   ```
+6. Menambahkan MySQL member ke ProxySQL Server Pool
+    ```shell
+    ProxySQLAdmin> INSERT INTO mysql_group_replication_hostgroups (writer_hostgroup, backup_writer_hostgroup, reader_hostgroup, offline_hostgroup, active, max_writers, writer_is_also_reader, max_transactions_behind) VALUES (2, 4, 3, 1, 1, 3, 1, 100);
+    ```
+    ```shell
+    ProxySQLAdmin> INSERT INTO mysql_servers(hostgroup_id, hostname, port) VALUES (2, '192.168.16.185', 3306);
+    ProxySQLAdmin> INSERT INTO mysql_servers(hostgroup_id, hostname, port) VALUES (2, '192.168.16.186', 3306);
+    ProxySQLAdmin> INSERT INTO mysql_servers(hostgroup_id, hostname, port) VALUES (2, '192.168.16.187', 3306);
+    ```
+    ```shell
+    ProxySQLAdmin> LOAD MYSQL SERVERS TO RUNTIME;
+    ProxySQLAdmin> SAVE MYSQL SERVERS TO DISK;
+    ```
+7. Membuat user untuk digunakan oleh ProxySQL
+   ```shell
+   vagrant@db185:~$ mysql -u root -p
+   ```
+   ```shell
+    vagrant@db186 mysql> CREATE USER 'bloguser'@'%' IDENTIFIED BY 'password';
+    vagrant@db186 mysql> CREATE DATABASE blog;
+    vagrant@db186 mysql> GRANT ALL PRIVILEGES on blog.* to 'bloguser'@'%';
+    vagrant@db186 mysql> FLUSH PRIVILEGES;
+   ```
+   ```shell
+   mysql -u admin -p -h 127.0.0.1 -P 6032 --prompt='ProxySQLAdmin> '
+   ```
+   ```shell
+    ProxySQLAdmin> INSERT INTO mysql_users(username, password, default_hostgroup) VALUES ('bloguser', 'password', 2);
+    ProxySQLAdmin> LOAD MYSQL USERS TO RUNTIME;
+    ProxySQLAdmin> SAVE MYSQL USERS TO DISK;
+   ```
 ### 3. Implementasi Aplikasi Tambahan Kedalam Sistem
 ### 4. Simulasi Fail-Over

@@ -20,22 +20,22 @@ Vagrant.configure("2") do |config|
     end
   end
 
-  # config.vm.define "webserver" do |webserver|
-  #   webserver.vm.hostname = "webserver"
-  #   webserver.vm.box = "ubuntu/xenial64"
-  #   webserver.vm.network "private_network", ip: "192.168.16.188"
+  config.vm.define "webserver" do |webserver|
+    webserver.vm.hostname = "webserver"
+    webserver.vm.box = "ubuntu/xenial64"
+    webserver.vm.network "private_network", ip: "192.168.16.188"
 
-  #   # Opsional. Edit sesuai dengan nama network adapter di komputer
-  #   #node.vm.network "public_network", bridge: "Qualcomm Atheros QCA9377 Wireless Network Adapter"
+    # Opsional. Edit sesuai dengan nama network adapter di komputer
+    #node.vm.network "public_network", bridge: "Qualcomm Atheros QCA9377 Wireless Network Adapter"
     
-  #   webserver.vm.provider "virtualbox" do |vb|
-  #     vb.name = "webserver"
-  #     vb.gui = false
-  #     vb.memory = "1024"
-  #   end
+    webserver.vm.provider "virtualbox" do |vb|
+      vb.name = "webserver"
+      vb.gui = false
+      vb.memory = "1024"
+    end
 
-  #   webserver.vm.provision "shell", path: "deployWebServer.sh", privileged: false
-  # end
+    webserver.vm.provision "shell", path: "deployWebServer.sh", privileged: false
+  end
 
   config.vm.define "proxy" do |proxy|
     proxy.vm.hostname = "proxy"
