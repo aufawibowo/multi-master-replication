@@ -1,6 +1,5 @@
 # Changing the APT sources.list to kambing.ui.ac.id
 sudo cp '/vagrant/sources.list' '/etc/apt/sources.list'
-
 # Updating the repo with the new sources
 sudo apt-get update -y
 
@@ -22,4 +21,4 @@ sudo ufw allow 33061
 sudo ufw allow 3306
 
 sudo systemctl start proxysql
-#mysql -u admin -padmin -h 127.0.0.1 -P 6032 < /vagrant/proxysql.sql
+mysql -u admin -padmin -h 127.0.0.1 -P 6032 < /vagrant/proxysql.sql
